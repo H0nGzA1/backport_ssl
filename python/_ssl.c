@@ -434,7 +434,7 @@ PySSL_sslwrap(PyObject *self, PyObject *args)
     char *ciphers = NULL;
     char *server_hostname = NULL;
 
-    if (!PyArg_ParseTuple(args, "O!i|zziizz:sslwrap",
+    if (!PyArg_ParseTuple(args, "O!i|zziizzz:sslwrap",
                           PySocketModule.Sock_Type,
                           &Sock,
                           &server_side,
@@ -459,7 +459,7 @@ PySSL_sslwrap(PyObject *self, PyObject *args)
 
 PyDoc_STRVAR(ssl_doc,
 "sslwrap(socket, server_side, [keyfile, certfile, certs_mode, protocol,\n"
-"                              cacertsfile, ciphers]) -> sslobject");
+"                              cacertsfile, ciphers, server_hostname]) -> sslobject");
 
 /* SSL object methods */
 

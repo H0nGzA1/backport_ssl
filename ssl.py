@@ -111,7 +111,7 @@ class SSLSocket(socket):
                  server_side=False, cert_reqs=CERT_NONE,
                  ssl_version=PROTOCOL_SSLv23, ca_certs=None,
                  do_handshake_on_connect=True,
-                 suppress_ragged_eofs=True, ciphers=None):
+                 suppress_ragged_eofs=True, ciphers=None, server_hostname=None):
         socket.__init__(self, _sock=sock._sock)
         # The initializer for socket overrides the methods send(), recv(), etc.
         # in the instancce, which we don't need -- but we want to provide the
@@ -130,7 +130,7 @@ class SSLSocket(socket):
         # see if it's connected
         try:
             socket.getpeername(self)
-        except socket_error, e:
+        except socket_error as e:
             if e.errno != errno.ENOTCONN:
                 raise
             # no, no connection yet
@@ -142,7 +142,7 @@ class SSLSocket(socket):
             self._sslobj = _ssl.sslwrap(self._sock, server_side,
                                         keyfile, certfile,
                                         cert_reqs, ssl_version, ca_certs,
-                                        ciphers)
+                                        ciphers, server_hostname)
             if do_handshake_on_connect:
                 self.do_handshake()
         self.keyfile = keyfile
@@ -151,6 +151,7 @@ class SSLSocket(socket):
         self.ssl_version = ssl_version
         self.ca_certs = ca_certs
         self.ciphers = ciphers
+        self.server_hostname = server_hostname
         self.do_handshake_on_connect = do_handshake_on_connect
         self.suppress_ragged_eofs = suppress_ragged_eofs
         self._makefile_refs = 0
@@ -162,7 +163,7 @@ class SSLSocket(socket):
 
         try:
             return self._sslobj.read(len)
-        except SSLError, x:
+        except SSLError as x:
             if x.args[0] == SSL_ERROR_EOF and self.suppress_ragged_eofs:
                 return ''
             else:
@@ -200,7 +201,7 @@ class SSLSocket(socket):
             while True:
                 try:
                     v = self._sslobj.write(data)
-                except SSLError, x:
+                except SSLError as x:
                     if x.args[0] == SSL_ERROR_WANT_READ:
                         return 0
                     elif x.args[0] == SSL_ERROR_WANT_WRITE:
@@ -315,7 +316,7 @@ class SSLSocket(socket):
             raise ValueError("attempt to connect already-connected SSLSocket!")
         self._sslobj = _ssl.sslwrap(self._sock, False, self.keyfile, self.certfile,
                                     self.cert_reqs, self.ssl_version,
-                                    self.ca_certs, self.ciphers)
+                                    self.ca_certs, self.ciphers, self.server_hostname)
         try:
             socket.connect(self, addr)
             if self.do_handshake_on_connect:
@@ -355,7 +356,8 @@ class SSLSocket(socket):
                           ca_certs=self.ca_certs,
                           ciphers=self.ciphers,
                           do_handshake_on_connect=self.do_handshake_on_connect,
-                          suppress_ragged_eofs=self.suppress_ragged_eofs),
+                          suppress_ragged_eofs=self.suppress_ragged_eofs,
+                          server_hostname=self.server_hostname),
                 addr)
 
     def makefile(self, mode='r', bufsize=-1):
@@ -375,14 +377,14 @@ def wrap_socket(sock, keyfile=None, certfile=None,
                 server_side=False, cert_reqs=CERT_NONE,
                 ssl_version=PROTOCOL_SSLv23, ca_certs=None,
                 do_handshake_on_connect=True,
-                suppress_ragged_eofs=True, ciphers=None):
+                suppress_ragged_eofs=True, ciphers=None, server_hostname=None):
 
     return SSLSocket(sock, keyfile=keyfile, certfile=certfile,
                      server_side=server_side, cert_reqs=cert_reqs,
                      ssl_version=ssl_version, ca_certs=ca_certs,
                      do_handshake_on_connect=do_handshake_on_connect,
                      suppress_ragged_eofs=suppress_ragged_eofs,
-                     ciphers=ciphers)
+                     ciphers=ciphers, server_hostname=server_hostname)
 
 
 # some utility functions
